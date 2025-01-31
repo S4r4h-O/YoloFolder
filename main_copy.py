@@ -4,28 +4,49 @@ import random
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtCore import Qt
-from ui.mainui import Ui_Dialog  # Importando a UI gerada
+from ui.newmainui import Ui_Dialog  # Importando a UI atualizada
 
 class MainWindow(QDialog, Ui_Dialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)  # Configura a UI
 
+        # Aplicando tema escuro
+        self.set_dark_theme()
+
         # Inicializa a barra de progresso
         self.progressBar.setValue(0)
+
+        # Configuração do slider (valores entre 50 e 90)
+        self.horizontalSlider.setMinimum(50)
+        self.horizontalSlider.setMaximum(90)
+        self.horizontalSlider.setValue(70)  # Valor inicial padrão: 70%
+        self.horizontalSlider.setTickPosition(self.horizontalSlider.TickPosition.TicksBelow)
+        self.horizontalSlider.setTickInterval(5)
+
+        # Criar um label para exibir o valor do slider dinamicamente
+        self.slider_value_label = self.label_5  # Usa a label existente
+        self.slider_value_label.setText(f"Random %: {self.horizontalSlider.value()}")
+
+        # Conectar o slider a uma função para atualizar o valor dinamicamente
+        self.horizontalSlider.valueChanged.connect(self.atualizar_slider_label)
 
         # Conectar botões aos métodos
         self.buttonBox.accepted.connect(self.processar_arquivos)
         self.buttonBox.rejected.connect(self.fechar_janela)
 
+    def atualizar_slider_label(self):
+        """ Atualiza dinamicamente o valor do slider na UI. """
+        self.slider_value_label.setText(f"Random %: {self.horizontalSlider.value()}")
+
     def processar_arquivos(self):
         """
-        Obtém os caminhos dos diretórios das caixas de entrada e executa as funções,
-        atualizando a barra de progresso durante o processamento.
+        Obtém os caminhos dos diretórios e a porcentagem de divisão de treino/validação.
         """
         diretorio_imagens = self.imageInput.text()
         diretorio_labels = self.labelInput.text()
         diretorio_saida = self.outInput.text()
+        split = self.horizontalSlider.value() / 100  # Converte para um valor entre 0.5 e 0.9
 
         if not diretorio_imagens or not diretorio_labels or not diretorio_saida:
             print("Preencha todos os campos antes de continuar!")
@@ -35,17 +56,17 @@ class MainWindow(QDialog, Ui_Dialog):
             self.progressBar.setValue(10)  # Inicia a barra em 10%
             criar_estrutura_yolo(diretorio_saida)
             self.progressBar.setValue(30)  # Atualiza para 30%
-            self.transferir_arquivos(diretorio_imagens, diretorio_labels, diretorio_saida)
+            self.transferir_arquivos(diretorio_imagens, diretorio_labels, diretorio_saida, split)
             self.progressBar.setValue(100)  # Finaliza em 100%
             print("Processo concluído com sucesso!")
         except Exception as e:
             print(f"Erro ao processar arquivos: {e}")
             self.progressBar.setValue(0)  # Resetar em caso de erro
 
-    def transferir_arquivos(self, diretorio_origem_imagens, diretorio_origem_labels, diretorio_destino, split=0.8):
+    def transferir_arquivos(self, diretorio_origem_imagens, diretorio_origem_labels, diretorio_destino, split):
         """
-        Transfere as imagens e rótulos para a estrutura YOLO, separando em treino e validação,
-        enquanto atualiza a barra de progresso.
+        Transfere as imagens e rótulos para a estrutura YOLO, separando em treino e validação
+        de acordo com a porcentagem definida pelo usuário.
         """
         if not os.path.exists(diretorio_origem_imagens):
             raise FileNotFoundError(f"Diretório de imagens não encontrado: {diretorio_origem_imagens}")
@@ -58,11 +79,11 @@ class MainWindow(QDialog, Ui_Dialog):
         if not imagens:
             raise ValueError("Nenhuma imagem encontrada no diretório de origem!")
 
-        random.seed(42)
+        random.seed(42)  # Mantém a reprodutibilidade
         random.shuffle(imagens)
 
         total_imagens = len(imagens)
-        num_train = int(split * total_imagens)
+        num_train = int(split * total_imagens)  # Ajusta a divisão conforme o usuário
 
         imagens_train = imagens[:num_train]
         imagens_val = imagens[num_train:]
@@ -94,6 +115,56 @@ class MainWindow(QDialog, Ui_Dialog):
     def fechar_janela(self):
         """ Fecha a janela quando o botão 'Cancelar' é pressionado """
         self.close()
+
+    def set_dark_theme(self):
+        """ Aplica um tema escuro no PySide6. """
+        dark_style = """
+        QWidget {
+            background-color: #282a36;
+            color: #f8f8f2;
+            font-size: 12pt;
+        }
+        QLabel {
+            color: #ff79c6;
+            font-size: 11pt;
+        }
+        QLineEdit {
+            background-color: #44475a;
+            border: 1px solid #6272a4;
+            padding: 5px;
+            color: #f8f8f2;
+            border-radius: 5px;
+        }
+        QSlider::groove:horizontal {
+            border: 1px solid #ff79c6;
+            height: 5px;
+            background: #44475a;
+        }
+        QSlider::handle:horizontal {
+            background: #ff79c6;
+            border: 1px solid #ff79c6;
+            width: 15px;
+            margin: -5px 0;
+            border-radius: 7px;
+        }
+        QDialogButtonBox QPushButton {
+            background-color: #50fa7b;
+            border-radius: 5px;
+            padding: 6px;
+            color: #282a36;
+            font-weight: bold;
+        }
+        QProgressBar {
+            border: 1px solid #ff79c6;
+            text-align: center;
+            background: #44475a;
+            color: #f8f8f2;
+        }
+        QProgressBar::chunk {
+            background-color: #50fa7b;
+        }
+        """
+        self.setStyleSheet(dark_style)
 
 
 def criar_estrutura_yolo(diretorio_base):
