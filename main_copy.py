@@ -4,23 +4,20 @@ import random
 import sys
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt
-from ui.mainui import Ui_Dialog  # Importando a UI atualizada
+from ui.mainui import Ui_Dialog
 
 class MainWindow(QDialog, Ui_Dialog):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)  # Configura a UI
+        self.setupUi(self)
 
-        # Aplicando tema escuro (Visual Studio Code)
         self.set_dark_theme()
 
-        # Inicializa a barra de progresso
         self.progressBar.setValue(0)
 
-        # Configuração do slider (valores entre 50 e 90)
         self.horizontalSlider.setMinimum(50)
         self.horizontalSlider.setMaximum(90)
-        self.horizontalSlider.setValue(70)  # Valor inicial padrão: 70%
+        self.horizontalSlider.setValue(70)
         self.horizontalSlider.setTickPosition(self.horizontalSlider.TickPosition.TicksBelow)
         self.horizontalSlider.setTickInterval(5)
 
@@ -76,15 +73,15 @@ class MainWindow(QDialog, Ui_Dialog):
             return
 
         try:
-            self.progressBar.setValue(10)  # Inicia a barra em 10%
+            self.progressBar.setValue(10)
             criar_estrutura_yolo(diretorio_saida)
-            self.progressBar.setValue(30)  # Atualiza para 30%
+            self.progressBar.setValue(30)
             self.transferir_arquivos(diretorio_imagens, diretorio_labels, diretorio_saida, split)
-            self.progressBar.setValue(100)  # Finaliza em 100%
+            self.progressBar.setValue(100)
             QMessageBox.information(self, "Sucesso", "Processo concluído com sucesso!")
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao processar arquivos: {e}")
-            self.progressBar.setValue(0)  # Resetar em caso de erro
+            self.progressBar.setValue(0)
 
     def transferir_arquivos(self, diretorio_origem_imagens, diretorio_origem_labels, diretorio_destino, split):
         """ Transfere as imagens e rótulos para a estrutura YOLO, separando em treino e validação. """
